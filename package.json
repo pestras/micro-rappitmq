@@ -1,0 +1,36 @@
+{
+  "name": "@pestras/micro-rabbitmq",
+  "version": "1.0.0",
+  "description": "pestras microservice plugin for rabbitmq broker support",
+  "main": "index.js",
+  "types": "index.ts",
+  "scripts": {
+    "tsc": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pestras/micro-rabbitmq.git"
+  },
+  "keywords": [
+    "nodejs",
+    "microservice",
+    "typescript",
+    "rabbitmq",
+    "broker",
+    "messaging"
+  ],
+  "author": "Pestras",
+  "bugs": {
+    "url": "https://github.com/pestras/micro-rabbitmq/issues"
+  },
+  "homepage": "https://github.com/pestras/micro-rabbitmq#readme",
+  "license": "ISC",
+  "dependencies": {
+    "@pestras/micro": "^1.1.3",
+    "amqplib": "^0.7.1"
+  },
+  "devDependencies": {
+    "@types/amqplib": "^0.5.17",
+    "typescript": "^4.2.3"
+  }
+}
