@@ -179,10 +179,9 @@ export class MicroMQ extends MicroPlugin implements HealthState {
   }
 
   async init() {
-    let conn: Connection;
-
     try {
-      conn = await mqConnect(this._connectOptions, this._socketOptions);
+      connection = await mqConnect(this._connectOptions, this._socketOptions);
+      Micro.logger.info("connected to rabbitmq broker successfully");
     } catch (e) {
       Micro.logger.error("error connecting to mq server", e?.message || e);
       throw e;
@@ -215,6 +214,18 @@ export class MicroMQ extends MicroPlugin implements HealthState {
       Micro.logger.error("error creating mq channel", e?.message || e);
       throw e;
     }
+  }
+
+  private async _createQueue(name: string, options?: Options.AssertQueue) {
+    let channel = await this._createChannel(name);
+    await channel.assertQueue(name, options);
+    return channel;
+  }
+
+  private async _createExchange(name: string, type: ExchangeType, options?: Options.AssertExchange) {
+    let channel = await this._createChannel(name);
+    await channel.assertExchange(name, type, options);
+    return channel;
   }
 
   private async _prepareQueues() {
@@ -273,18 +284,6 @@ export class MicroMQ extends MicroPlugin implements HealthState {
         }, exchange.consumeOptions);
       }
     }
-  }
-
-  private async _createQueue(name: string, options?: Options.AssertQueue) {
-    let channel = await this._createChannel(name);
-    await channel.assertQueue(name, options);
-    return channel;
-  }
-
-  private async _createExchange(name: string, type: ExchangeType, options?: Options.AssertExchange) {
-    let channel = await this._createChannel(name);
-    await channel.assertExchange(name, type, options);
-    return channel;
   }
 
   static async Request(queue: string, content: Buffer, consumeOptions?: Options.Consume & { timeout: number }) {
