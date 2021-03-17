@@ -205,6 +205,7 @@ export class MicroMQ extends MicroPlugin implements HealthState {
   onExit() {
     Micro.logger.warn("closing rabbitmq connection");
     connection && connection.close();
+    Micro.logger.warn("Rabbitmq connection closed");
   }
 
   private async _createChannel(name: string) {
@@ -262,7 +263,7 @@ export class MicroMQ extends MicroPlugin implements HealthState {
 
         Micro.logger.info('consuming exchange: ' + exchangeName);
 
-        let channel = await this._createExchange(exchangeName, 'fanout', exchange.assertOptions);
+        let channel = await this._createExchange(exchangeName, exchange.type, exchange.assertOptions);
         let assertedQueue: Replies.AssertQueue;
 
         if (exchange.assertOptions.prefetch)
