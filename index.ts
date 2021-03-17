@@ -67,7 +67,7 @@ export function DIRECT(
   return (target: any, key: string) => {
     exchanges[name] = exchanges[name] || [];
     exchanges[name].push({
-      type: "fanout",
+      type: "direct",
       handlerName: key,
       routingKeys: routingKeys,
       service: target.constructor,
@@ -86,7 +86,7 @@ export function TOPIC(
   return (target: any, key: string) => {
     exchanges[name] = exchanges[name] || [];
     exchanges[name].push({
-      type: "fanout",
+      type: "topic",
       handlerName: key,
       routingKeys: patterns,
       service: target.constructor,
@@ -203,6 +203,7 @@ export class MicroMQ extends MicroPlugin implements HealthState {
   }
 
   onExit() {
+    Micro.logger.warn("closing rabbitmq connection");
     connection && connection.close();
   }
 
