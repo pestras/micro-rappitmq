@@ -1,6 +1,6 @@
 {
   "name": "@pestras/micro-rabbitmq",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "pestras microservice plugin for rabbitmq broker support",
   "main": "index.js",
   "types": "index.ts",

@@ -274,9 +274,9 @@ export class MicroMQ extends MicroPlugin implements HealthState {
         } catch (e) {
           Micro.logger.error(`error asserting queue!`, e?.message || e);
         }
-        
+
         exchange.routingKeys.forEach(key => channel.bindQueue(assertedQueue.queue, exchangeName, key));
-        
+
         channel.consume(assertedQueue.queue, (msg: ConsumeMessage) => {
           try {
             currentService[exchange.handlerName](msg, channel);
@@ -288,18 +288,18 @@ export class MicroMQ extends MicroPlugin implements HealthState {
     }
   }
 
-  static async Request(queue: string, content: Buffer, consumeOptions?: Options.Consume & { timeout: number }) {
-    if (!connection) throw "no rabbitMQ connection found!";
-  
-    let channel = await connection.createChannel();
-    let timerId: any;
-  
-    let q = await channel.assertQueue('', { exclusive: true });
-    let correlationId =  Math.random().toString() + Math.random().toString() + Math.random().toString();
-  
-    channel.sendToQueue(queue, content, { correlationId, replyTo: q.queue });
-  
-    return new Promise((resolve, reject) => {
+  static async Request(queue: string, content: Buffer, consumeOptions?: Options.Consume & { timeout: number }): Promise<ConsumeMessage> {
+    return new Promise(async (resolve, reject) => {
+      if (!connection) reject("no rabbitMQ connection found!");
+
+      let channel = await connection.createChannel();
+      let timerId: any;
+
+      let q = await channel.assertQueue('', { exclusive: true });
+      let correlationId = Math.random().toString() + Math.random().toString() + Math.random().toString();
+
+      channel.sendToQueue(queue, content, { correlationId, replyTo: q.queue });
+
       timerId = setTimeout(() => {
         channel.removeListener(q.queue, handler);
         reject(new Error("RPC request timeout!"))
