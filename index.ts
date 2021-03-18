@@ -288,7 +288,7 @@ export class MicroMQ extends MicroPlugin implements HealthState {
     }
   }
 
-  static async Request(queue: string, content: Buffer, consumeOptions?: Options.Consume & { timeout: number }): Promise<ConsumeMessage> {
+  static async Request(queue: string, content: Buffer, consumeOptions?: Options.Consume & { timeout?: number }): Promise<ConsumeMessage> {
     return new Promise(async (resolve, reject) => {
       if (!connection) reject("no rabbitMQ connection found!");
 
@@ -303,7 +303,7 @@ export class MicroMQ extends MicroPlugin implements HealthState {
       timerId = setTimeout(() => {
         channel.removeListener(q.queue, handler);
         reject(new Error("RPC request timeout!"))
-      }, consumeOptions.timeout || 3000);
+      }, consumeOptions?.timeout || 3000);
 
       function handler(msg: ConsumeMessage) {
         if (msg.properties.correlationId == correlationId) {
