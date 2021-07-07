@@ -179,13 +179,8 @@ export class MicroMQ extends MicroPlugin implements HealthState {
   }
 
   async init() {
-    try {
-      connection = await mqConnect(this._connectOptions, this._socketOptions);
-      Micro.logger.info("connected to rabbitmq broker successfully");
-    } catch (e) {
-      Micro.logger.error("error connecting to mq server", e?.message || e);
-      throw e;
-    }
+    connection = await mqConnect(this._connectOptions, this._socketOptions);
+    Micro.logger.info("connected to rabbitmq broker successfully");
 
     await this._prepareQueues();
     await this._prepareExchanges();
@@ -208,24 +203,23 @@ export class MicroMQ extends MicroPlugin implements HealthState {
     Micro.logger.warn("Rabbitmq connection closed");
   }
 
-  private async _createChannel(name: string) {
+  private async _createChannel() {
     try {
       let channel = await connection.createChannel();
       return channel;
     } catch (e) {
-      Micro.logger.error("error creating mq channel", e?.message || e);
-      throw e;
+      Micro.logger.error(e, "error creating mq channel");
     }
   }
 
   private async _createQueue(name: string, options?: Options.AssertQueue) {
-    let channel = await this._createChannel(name);
+    let channel = await this._createChannel();
     await channel.assertQueue(name, options);
     return channel;
   }
 
   private async _createExchange(name: string, type: ExchangeType, options?: Options.AssertExchange) {
-    let channel = await this._createChannel(name);
+    let channel = await this._createChannel();
     await channel.assertExchange(name, type, options);
     return channel;
   }
@@ -248,7 +242,7 @@ export class MicroMQ extends MicroPlugin implements HealthState {
         try {
           currentService[queue.handlerName](msg, channel);
         } catch (e) {
-          Micro.logger.error(`error in queue handler!`, e?.message || e);
+          Micro.logger.error(e, `error in queue handler: ${queue.handlerName}`);
         }
       }, queue.consumeOptions);
     }
@@ -272,7 +266,7 @@ export class MicroMQ extends MicroPlugin implements HealthState {
         try {
           assertedQueue = await channel.assertQueue('', { exclusive: true });
         } catch (e) {
-          Micro.logger.error(`error asserting queue!`, e?.message || e);
+          Micro.logger.error(e, `error asserting queue!`);
         }
 
         exchange.routingKeys.forEach(key => channel.bindQueue(assertedQueue.queue, exchangeName, key));
@@ -281,7 +275,7 @@ export class MicroMQ extends MicroPlugin implements HealthState {
           try {
             currentService[exchange.handlerName](msg, channel);
           } catch (e) {
-            Micro.logger.error(`error in queue handler!`, e?.message || e);
+            Micro.logger.error(e, `error in queue handler: ${exchange.handlerName}`);
           }
         }, exchange.consumeOptions);
       }
