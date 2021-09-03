@@ -1,24 +1,21 @@
 import { Micro, MicroPlugin, HealthState } from "@pestras/micro";
-import { connect as mqConnect, Options, Connection, Channel, ConsumeMessage, Replies } from 'amqplib';
+import { connect as mqConnect, Options, Connection, Channel, ConsumeMessage, Replies, ConsumeMessageFields, MessageProperties } from 'amqplib';
 
 export type ExchangeType = "fanout" | "direct" | "topic" | "headers";
 
 export { ConsumeMessage, Channel }
 
 export class MQMsg<T = any> {
+  fields: ConsumeMessageFields;
+  properties: MessageProperties;
+  content: Buffer;
+  json: T;
 
-  constructor(private _msg: ConsumeMessage) {}
-
-  get json(): T {
-    return JSON.parse(this._msg.content.toString());
-  }
-
-  get fields() {
-    return this._msg.fields;
-  }
-
-  get properties() {
-    return this._msg.properties;
+  constructor(private _msg: ConsumeMessage) {
+    this.fields = this._msg.fields;
+    this.properties = this._msg.properties;
+    this.content = this._msg.content;
+    this.json = JSON.parse(this._msg.content.toString());
   }
 }
 
