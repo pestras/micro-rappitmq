@@ -119,13 +119,13 @@ export class Queue {
 
   get channel() { return this._channel; }
 
-  async send(content: Buffer, options?: Options.Publish) {
+  async send(content: any, options?: Options.Publish) {
     if (!this._channel) {
       this._channel = await connection.createChannel();
       await this._channel.assertQueue(this.name, this.options);
     }
 
-    this._channel.sendToQueue(this.name, content, options);
+    this._channel.sendToQueue(this.name, content !== undefined ? Buffer.from(JSON.stringify(content)) : content, options);
   }
 }
 
@@ -144,37 +144,37 @@ export abstract class Excahnge {
 
 export class FanoutEx extends Excahnge {
 
-  async publish(content: Buffer, options?: Options.Publish) {
+  async publish(content: any, options?: Options.Publish) {
     if (!this._channel) {
       this._channel = await connection.createChannel();
       await this._channel.assertExchange(this.name, 'fanout', this.options);
     }
 
-    this._channel.publish(this.name, '', content, options);
+    this._channel.publish(this.name, '', content !== undefined ? Buffer.from(JSON.stringify(content)) : content, options);
   }
 }
 
 export class DirectEx extends Excahnge {
 
-  async publish(routingKey: string, content: Buffer, options?: Options.Publish) {
+  async publish(routingKey: string, content: any, options?: Options.Publish) {
     if (!this._channel) {
       this._channel = await connection.createChannel();
       await this._channel.assertExchange(this.name, 'direct', this.options);
     }
 
-    this._channel.publish(this.name, routingKey, content, options);
+    this._channel.publish(this.name, routingKey, content !== undefined ? Buffer.from(JSON.stringify(content)) : content, options);
   }
 }
 
 export class TopicEx extends Excahnge {
 
-  async publish(pattern: string, content: Buffer, options?: Options.Publish) {
+  async publish(pattern: string, content: any, options?: Options.Publish) {
     if (!this._channel) {
       this._channel = await connection.createChannel();
       await this._channel.assertExchange(this.name, 'topic', this.options);
     }
 
-    this._channel.publish(this.name, pattern, content, options);
+    this._channel.publish(this.name, pattern, content !== undefined ? Buffer.from(JSON.stringify(content)) : content, options);
   }
 }
 
