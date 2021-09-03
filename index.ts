@@ -11,11 +11,20 @@ export class MQMsg<T = any> {
   content: Buffer;
   json: T;
 
-  constructor(private _msg: ConsumeMessage) {
+  constructor(private _msg: ConsumeMessage, public channel?: Channel) {
     this.fields = this._msg.fields;
     this.properties = this._msg.properties;
     this.content = this._msg.content;
     this.json = JSON.parse(this._msg.content.toString());
+  }
+
+  respond(content: any) {
+    if (this.channel)
+      this.channel.sendToQueue(
+        this.properties.replyTo,
+        content !== undefined ? Buffer.from(JSON.stringify(content)) : content,
+        { correlationId: this.properties.correlationId }
+      );
   }
 }
 
@@ -255,7 +264,7 @@ export class MicroMQ extends MicroPlugin implements HealthState {
 
       channel.consume(queueName, async (msg: ConsumeMessage) => {
         try {
-          currentService[queue.handlerName](new MQMsg(msg), channel);
+          currentService[queue.handlerName](new MQMsg(msg, channel));
         } catch (e) {
           Micro.logger.error(e, `error in queue handler: ${queue.handlerName}`);
         }
@@ -288,7 +297,7 @@ export class MicroMQ extends MicroPlugin implements HealthState {
 
         channel.consume(assertedQueue.queue, (msg: ConsumeMessage) => {
           try {
-            currentService[exchange.handlerName](new MQMsg(msg), channel);
+            currentService[exchange.handlerName](new MQMsg(msg, channel));
           } catch (e) {
             Micro.logger.error(e, `error in queue handler: ${exchange.handlerName}`);
           }
