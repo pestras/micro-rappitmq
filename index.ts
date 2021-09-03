@@ -5,6 +5,23 @@ export type ExchangeType = "fanout" | "direct" | "topic" | "headers";
 
 export { ConsumeMessage, Channel }
 
+export class MQMsg<T = any> {
+
+  constructor(private _msg: ConsumeMessage) {}
+
+  get json(): T {
+    return JSON.parse(this._msg.content.toString());
+  }
+
+  get fields() {
+    return this._msg.fields;
+  }
+
+  get properties() {
+    return this._msg.properties;
+  }
+}
+
 interface IQueue {
   assertOptions: Options.AssertQueue & { prefetch?: boolean },
   consumeOptions: Options.Consume,
@@ -229,7 +246,8 @@ export class MicroMQ extends MicroPlugin implements HealthState {
       let queue = queues[queueName];
       let currentService = Micro.getCurrentService(queue.service) || Micro.service;
 
-      if (typeof currentService[queue.handlerName] !== "function") continue;
+      if (typeof currentService[queue.handlerName] !== "function")
+        continue;
 
       Micro.logger.info('consuming queue: ' + queueName);
 
@@ -240,7 +258,7 @@ export class MicroMQ extends MicroPlugin implements HealthState {
 
       channel.consume(queueName, async (msg: ConsumeMessage) => {
         try {
-          currentService[queue.handlerName](msg, channel);
+          currentService[queue.handlerName](new MQMsg(msg), channel);
         } catch (e) {
           Micro.logger.error(e, `error in queue handler: ${queue.handlerName}`);
         }
@@ -273,7 +291,7 @@ export class MicroMQ extends MicroPlugin implements HealthState {
 
         channel.consume(assertedQueue.queue, (msg: ConsumeMessage) => {
           try {
-            currentService[exchange.handlerName](msg, channel);
+            currentService[exchange.handlerName](new MQMsg(msg), channel);
           } catch (e) {
             Micro.logger.error(e, `error in queue handler: ${exchange.handlerName}`);
           }
@@ -282,7 +300,7 @@ export class MicroMQ extends MicroPlugin implements HealthState {
     }
   }
 
-  static async Request(queue: string, content: Buffer, consumeOptions?: Options.Consume & { timeout?: number }): Promise<ConsumeMessage> {
+  static async Request<T = any>(queue: string, content: any, consumeOptions?: Options.Consume & { timeout?: number }): Promise<MQMsg<T>> {
     return new Promise(async (resolve, reject) => {
       if (!connection) reject("no rabbitMQ connection found!");
 
@@ -291,8 +309,9 @@ export class MicroMQ extends MicroPlugin implements HealthState {
 
       let q = await channel.assertQueue('', { exclusive: true });
       let correlationId = Math.random().toString() + Math.random().toString() + Math.random().toString();
+      let buffer = content != undefined ? Buffer.from(JSON.stringify(content)) : undefined;
 
-      channel.sendToQueue(queue, content, { correlationId, replyTo: q.queue });
+      channel.sendToQueue(queue, buffer, { correlationId, replyTo: q.queue });
 
       timerId = setTimeout(() => {
         channel.removeListener(q.queue, handler);
@@ -302,7 +321,7 @@ export class MicroMQ extends MicroPlugin implements HealthState {
       function handler(msg: ConsumeMessage) {
         if (msg.properties.correlationId == correlationId) {
           clearTimeout(timerId);
-          resolve(msg);
+          resolve(new MQMsg<T>(msg));
         }
       }
 
