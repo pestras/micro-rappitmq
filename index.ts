@@ -334,4 +334,37 @@ export class MicroMQ extends MicroPlugin implements HealthState {
       channel.consume(q.queue, handler, consumeOptions);
     });
   }
+
+  private static queues: { [key: string]: Queue } = {};
+  private static fanouts: { [key: string]: FanoutEx } = {};
+  private static directs: { [key: string]: Excahnge } = {};
+  private static topics: { [key: string]: Excahnge } = {};  
+
+  static Queue(name: string, options?: Options.AssertQueue) {
+    if (MicroMQ.queues[name])
+      return MicroMQ.queues[name];
+
+    return MicroMQ.queues[name] = new Queue(name, options);
+  }
+
+  static Fanout(name: string, options?: Options.AssertExchange): FanoutEx {
+    if (MicroMQ.fanouts[name])
+      return MicroMQ.fanouts[name];
+
+    return MicroMQ.fanouts[name] = new FanoutEx(name, options);
+  }
+
+  static Direct(name: string, options?: Options.AssertExchange): DirectEx {
+    if (MicroMQ.directs[name])
+      return MicroMQ.directs[name];
+
+    return MicroMQ.directs[name] = new DirectEx(name, options);
+  }
+
+  static Topic(name: string, options?: Options.AssertExchange): TopicEx {
+    if (MicroMQ.topics[name])
+      return MicroMQ.topics[name];
+
+    return MicroMQ.topics[name] = new TopicEx(name, options);
+  }
 }
