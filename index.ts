@@ -29,14 +29,14 @@ export class MQMsg<T = any> {
 }
 
 interface IQueue {
-  assertOptions: Options.AssertQueue & { prefetch?: boolean },
+  assertOptions: Options.AssertQueue & { prefetch?: number },
   consumeOptions: Options.Consume,
   service: any;
   handlerName: string;
 }
 
 interface IExchange {
-  assertOptions: Options.AssertExchange & { prefetch?: boolean },
+  assertOptions: Options.AssertExchange & { prefetch?: number },
   consumeOptions: Options.Consume,
   routingKeys?: string[];
   type: ExchangeType
@@ -50,7 +50,7 @@ const exchanges: { [key: string]: IExchange[] } = {};
 
 export function QUEUE(
   name: string,
-  assertOptions?: Options.AssertQueue & { prefetch?: boolean },
+  assertOptions?: Options.AssertQueue & { prefetch?: number },
   consumeOptions?: Options.Consume) {
 
   return (target: any, key: string) => {
@@ -65,7 +65,7 @@ export function QUEUE(
 
 export function FANOUT(
   name: string,
-  options?: Options.AssertExchange & { prefetch?: boolean },
+  options?: Options.AssertExchange & { prefetch?: number },
   consumeOptions?: Options.Consume) {
   return (target: any, key: string) => {
 
@@ -260,7 +260,7 @@ export class MicroMQ extends MicroPlugin implements HealthState {
       let channel = await this._createQueue(queueName, queue.assertOptions);
 
       if (queue.assertOptions.prefetch)
-        channel.prefetch(1);
+        channel.prefetch(Math.abs(queue.assertOptions.prefetch));
 
       channel.consume(queueName, async (msg: ConsumeMessage) => {
         try {
@@ -285,7 +285,7 @@ export class MicroMQ extends MicroPlugin implements HealthState {
         let assertedQueue: Replies.AssertQueue;
 
         if (exchange.assertOptions.prefetch)
-          channel.prefetch(1);
+          channel.prefetch(Math.abs(exchange.assertOptions.prefetch));
 
         try {
           assertedQueue = await channel.assertQueue('', { exclusive: true });
