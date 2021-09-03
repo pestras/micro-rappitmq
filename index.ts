@@ -26,6 +26,11 @@ export class MQMsg<T = any> {
         { correlationId: this.properties.correlationId }
       );
   }
+
+  acknowledge() {
+    if (this.channel)
+      this.channel.ack(this._msg);
+  }
 }
 
 interface IQueue {
