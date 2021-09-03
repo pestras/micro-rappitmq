@@ -18,13 +18,16 @@ export class MQMsg<T = any> {
     this.json = JSON.parse(this._msg.content.toString());
   }
 
-  respond(content: any) {
-    if (this.channel)
+  respond(content: any, acknowledge = false) {
+    if (this.channel) {
       this.channel.sendToQueue(
         this.properties.replyTo,
         content !== undefined ? Buffer.from(JSON.stringify(content)) : content,
         { correlationId: this.properties.correlationId }
       );
+
+      acknowledge && this.channel.ack(this._msg);
+    }
   }
 
   acknowledge() {
