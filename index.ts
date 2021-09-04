@@ -3,7 +3,7 @@ import { connect as mqConnect, Options, Connection, Channel, ConsumeMessage, Rep
 
 export type ExchangeType = "fanout" | "direct" | "topic" | "headers";
 
-export { ConsumeMessage, Channel }
+export * from 'amqplib';
 
 export class MQMsg<T = any> {
   fields: ConsumeMessageFields;
