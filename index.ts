@@ -243,16 +243,18 @@ export class MicroMQ extends MicroPlugin implements HealthState {
 
       timerId = setTimeout(() => {
         channel.removeAllListeners();
+        channel.deleteQueue(q.queue, { ifEmpty: false, ifUnused: false });
         reject(new Error("RPC request timeout!"))
       }, timeout);
 
       function handler(msg: ConsumeMessage) {
         if (msg.properties.correlationId == correlationId) {
+          channel.removeAllListeners();
+          channel.deleteQueue(q.queue, { ifEmpty: false, ifUnused: false });
           clearTimeout(timerId);
           resolve(new MQMsg<T>(msg));
         }
 
-        channel.removeAllListeners();
       }
 
       channel.consume(q.queue, handler, { noAck: true });
